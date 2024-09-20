@@ -19,7 +19,12 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.sunnan.wallpaperapp",
+      "permissions": [
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -31,6 +36,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "entryPoint": "./index.js",
+    "extra": {
+      "eas": {
+        "projectId": "b4784ba6-80c1-43a1-8d20-ebae5e2d41e6"
+      }
     }
   }
 }
