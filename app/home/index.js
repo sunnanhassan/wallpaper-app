@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, TextInput } from 'react-native';
+import { View, Text, Pressable, StyleSheet, TextInput, FlatList } from 'react-native';
 import React, { useRef, useState, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, FontAwesome6, Ionicons } from '@expo/vector-icons';
@@ -25,12 +25,28 @@ const HomeScreen = () => {
         if (cat !== activeCategories) {
             SetActiveCategories(cat); // Update only if a different category is selected
         }
+        setSearch(''); // Clear search when a category is selected
     };
 
     useEffect(() => {
         // This ensures that 'Wallpaper' is the default selected category if it's in the list
         SetActiveCategories(data.categories[0]);
     }, []);
+
+    // Filter categories based on search input
+    const filteredCategories = data.categories.filter(category =>
+        category.toLowerCase().includes(search.toLowerCase())
+    );
+
+    // Render suggestion item
+    const renderSuggestionItem = ({ item }) => (
+        <Pressable 
+            style={styles.suggestionItem} 
+            onPress={() => handleChangeCategories(item)}
+        >
+            <Text>{item}</Text>
+        </Pressable>
+    );
 
     return (
         <View style={[styles.container, { paddingTop }]}>
@@ -46,27 +62,41 @@ const HomeScreen = () => {
             </View>
 
             {/* Search Bar */}
-            <View style={styles.searchBar}>
-                <View style={styles.searchIcon}>
-                    <Feather name='search' size={24} color={theme.colors.neutral(0.4)} />
+            <View style={styles.searchBarContainer}>
+                <View style={styles.searchBar}>
+                    <View style={styles.searchIcon}>
+                        <Feather name='search' size={24} color={theme.colors.neutral(0.4)} />
+                    </View>
+                    <TextInput
+                        placeholder='Search for Categories'
+                        style={styles.searchInput}
+                        ref={searchInputRef}
+                        value={search}
+                        onChangeText={value => setSearch(value)}
+                    />
+                    {search && (
+                        <Pressable style={styles.closeIcon} onPress={() => setSearch('')}>
+                            <Ionicons name='close' size={24} color={theme.colors.neutral(0.6)} />
+                        </Pressable>
+                    )}
                 </View>
-                <TextInput
-                    placeholder='Search for Photos'
-                    style={styles.searchInput}
-                    ref={searchInputRef}
-                    value={search}
-                    onChangeText={value => setSearch(value)}
-                />
                 {search && (
-                    <Pressable style={styles.closeIcon} onPress={() => setSearch('')}>
-                        <Ionicons name='close' size={24} color={theme.colors.neutral(0.6)} />
-                    </Pressable>
+                    <FlatList
+                        data={filteredCategories}
+                        renderItem={renderSuggestionItem}
+                        keyExtractor={item => item}
+                        style={styles.suggestionList}
+                    />
                 )}
             </View>
 
             {/* Categories and Wallpapers */}
             <View style={styles.categories}>
-                <Categories activeCategories={activeCategories} handleChangeCategories={handleChangeCategories} />
+                <Categories 
+                    activeCategories={activeCategories} 
+                    handleChangeCategories={handleChangeCategories}
+                    categories={data.categories}
+                />
             </View>
 
             {/* Wallpapers */}
@@ -93,8 +123,10 @@ const styles = StyleSheet.create({
         fontWeight: theme.fontWeights.semiBold,
         color: theme.colors.neutral(0.9),
     },
-    searchBar: {
+    searchBarContainer: {
         marginHorizontal: wp(4),
+    },
+    searchBar: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -118,6 +150,22 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.neutral(0.1),
         padding: 8,
         borderRadius: theme.radius.sm,
+    },
+    suggestionList: {
+        maxHeight: hp(20),
+        marginTop: 5,
+        borderRadius: theme.radius.md,
+        backgroundColor: theme.colors.white,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    suggestionItem: {
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.neutral(0.1),
     },
     categories: {
         marginTop: 15,

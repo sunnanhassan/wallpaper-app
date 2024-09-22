@@ -8,35 +8,31 @@ import { Entypo, Octicons, AntDesign } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
+import * as MediaLibrary from 'expo-media-library'; // Updated import
 
-import * as Permissions from 'expo-permissions'; // Import Permissions
-
+// Helper function to calculate image size
 const getSize = (imageWidth, imageHeight) => {
-  // Default size if dimensions are invalid
   if (!imageWidth || !imageHeight) return { width: wp(92), height: wp(92) };
-
   const aspectRatio = imageWidth / imageHeight;
-  const maxWidth = wp(92); // Max width is 92% of screen width
+  const maxWidth = wp(92);
   let calculatedWidth = maxWidth;
   let calculatedHeight = maxWidth / aspectRatio;
-
-  // Adjust for portrait mode
   if (aspectRatio < 1) {
     calculatedHeight = maxWidth;
     calculatedWidth = calculatedHeight * aspectRatio;
   }
-
   return { width: calculatedWidth, height: calculatedHeight };
 };
 
 const ImageScreen = () => {
   const [status, setStatus] = useState('loading');
-  const [imageSize, setImageSize] = useState({ width: wp(92), height: wp(92) }); // Default size
+  const [imageSize, setImageSize] = useState({ width: wp(92), height: wp(92) });
   const [showPopup, setShowPopup] = useState(false);
   const router = useRouter();
-  const item = useLocalSearchParams();
-  const uri = item?.imageUri;
+  const { imageUri, imageWidth, imageHeight } = useLocalSearchParams();
+
+  // Ensure imageUri is valid
+  const uri = decodeURIComponent(imageUri || '');
 
   const handleDownloadImage = async () => {
     if (!uri) {
@@ -44,8 +40,15 @@ const ImageScreen = () => {
       return;
     }
 
+    // Request permission to access the media library
+    const { granted } = await MediaLibrary.requestPermissionsAsync();
+    if (!granted) {
+      Alert.alert('Permission Denied', 'Cannot save the image without permission to access the gallery.');
+      return;
+    }
+
     try {
-      const fileUri = FileSystem.documentDirectory + 'downloaded_image.jpg'; // Changed to document directory
+      const fileUri = FileSystem.documentDirectory + 'downloaded_image.jpg';
       const downloadResult = await FileSystem.downloadAsync(uri, fileUri);
 
       if (downloadResult.status !== 200) {
@@ -56,10 +59,10 @@ const ImageScreen = () => {
       const asset = await MediaLibrary.createAssetAsync(fileUri);
       await MediaLibrary.createAlbumAsync('Download', asset, false);
 
-      setShowPopup(true); // Show popup when successful
+      setShowPopup(true);
       setTimeout(() => setShowPopup(false), 3000);
 
-      Alert.alert('Success', `Image downloaded successfully to gallery`); // Inform user where it's saved
+      Alert.alert('Success', 'Image downloaded successfully to gallery.');
     } catch (error) {
       console.error('Error downloading image:', error);
       Alert.alert('Error', 'Failed to download the image.');
@@ -73,7 +76,7 @@ const ImageScreen = () => {
     }
 
     try {
-      const fileUri = FileSystem.documentDirectory + 'shared_image.jpg'; // Changed to document directory
+      const fileUri = FileSystem.documentDirectory + 'shared_image.jpg';
       const downloadResult = await FileSystem.downloadAsync(uri, fileUri);
 
       if (downloadResult.status !== 200) {
@@ -82,24 +85,24 @@ const ImageScreen = () => {
       }
 
       if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert('Error', 'Sharing is not available on this device');
+        Alert.alert('Error', 'Sharing is not available on this device.');
         return;
       }
 
       await Sharing.shareAsync(fileUri);
     } catch (error) {
-      Alert.alert('Error', 'Failed to share the image');
+      Alert.alert('Error', 'Failed to share the image.');
       console.error('Error sharing image:', error);
     }
   };
 
   useEffect(() => {
-    if (uri && item.imageWidth && item.imageHeight) {
-      const size = getSize(item.imageWidth, item.imageHeight);
+    if (uri && imageWidth && imageHeight) {
+      const size = getSize(Number(imageWidth), Number(imageHeight));
       setImageSize(size);
       setStatus('Loaded');
     }
-  }, [uri, item.imageWidth, item.imageHeight]);
+  }, [uri, imageWidth, imageHeight]);
 
   return (
     <BlurView style={styles.container} tint="dark" intensity={60}>
@@ -213,4 +216,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
 export default ImageScreen;

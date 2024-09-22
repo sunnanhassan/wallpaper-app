@@ -1,14 +1,26 @@
 import { View, Image, StyleSheet, Pressable, Text } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { hp, wp } from '../helpers/common';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { theme } from '../constants/theme';
 import { useRouter } from 'expo-router';
+import * as ScreenOrientation from 'expo-screen-orientation';
 
 const WelcomeScreen = () => {
   const router = useRouter();
+
+  useEffect(() => {
+    // Lock the screen orientation to portrait mode for this screen
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
+
+    // Optional: Reset to default when leaving this screen
+    return () => {
+      ScreenOrientation.unlockAsync();
+    };
+  }, []);
+  
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -17,7 +29,6 @@ const WelcomeScreen = () => {
         style={styles.bgImage}
         resizeMode="cover"
       />
-      {/* Linear Gradient */}
       <Animated.View entering={FadeInDown.duration(600)} style={{ flex: 1 }}>
         <LinearGradient
           colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.5)', 'white', 'white']}
@@ -25,18 +36,10 @@ const WelcomeScreen = () => {
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 0.8 }}
         />
-
-        {/* Content */}
         <View style={styles.contentContainer}>
-
-          <Animated.Text
-            entering={FadeInDown.delay(400).springify()}
-            style={styles.title}>Pixels</Animated.Text>
-          <Animated.Text
-            entering={FadeInDown.delay(500).springify()} style={styles.punchline}>Every Pixel tells a story</Animated.Text>
-          <Animated.View
-            entering={FadeInDown.delay(600).springify()}
-          >
+          <Animated.Text entering={FadeInDown.delay(400).springify()} style={styles.title}>Pixels</Animated.Text>
+          <Animated.Text entering={FadeInDown.delay(500).springify()} style={styles.punchline}>Every Pixel tells a story</Animated.Text>
+          <Animated.View entering={FadeInDown.delay(600).springify()}>
             <Pressable onPress={() => router.push('home')} style={styles.startButton}>
               <Text style={styles.startText}>Start Explorer</Text>
             </Pressable>
@@ -77,7 +80,7 @@ const styles = StyleSheet.create({
     fontSize: hp(2),
     letterSpacing: 1,
     marginBottom: 10,
-    fontWeight: theme.fontWeights.medium
+    fontWeight: theme.fontWeights.medium,
   },
   startButton: {
     marginBottom: 50,
@@ -85,15 +88,13 @@ const styles = StyleSheet.create({
     padding: 15,
     paddingHorizontal: 90,
     borderRadius: theme.radius.xl,
-    borderCurve: 'continous'
   },
   startText: {
     color: theme.colors.white,
     fontSize: hp(3),
     fontWeight: theme.fontWeights.medium,
-    letterSpacing: 1
-  }
-
+    letterSpacing: 1,
+  },
 });
 
 export default WelcomeScreen;
