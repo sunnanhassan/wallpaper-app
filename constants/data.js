@@ -1,4 +1,4 @@
-const categories = ['Wallpaper', 'Technology']
+const categories = ['Top Trending', 'Illustration', 'Nature','Sunset']
 
 
 export const data = {
